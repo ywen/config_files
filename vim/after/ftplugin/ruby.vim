@@ -1,4 +1,16 @@
 " functions
+" Use file name as class name after classify
+function! ClassName()
+  let name = expand("%:t:r")
+  let new_name = substitute(name, '\(?:^\|_\)\(.\)', '\U\2', "g")
+  return substitute(new_name, "\^.", '\U\0', "")
+endfunction
+
+function! ClassNameUnderTest()
+  let spec_class = ClassName()
+  return substitute(spec_class, 'Spec', "", "")
+endfunction
+
 function! SpecDescribed()
   let curline = line(".")
   let curcol  = col(".")
@@ -22,6 +34,7 @@ function! IterVar(collection)
   return rails#singularize(collection)
 endfunction
 
+Snippet cla class ``ClassName()``<CR><{}><CR>end
 " general ruby snippets
 Snippet each <{collection}>.each do |<{collection:IterVar(@z)}>|<CR><{}><CR>end
 Snippet collect <{collection}>.collect {|<{member}>| <{}> }
@@ -78,8 +91,8 @@ Snippet cont context "<{description}>" do<CR>setup do<CR><{}><CR>end<CR>end
 Snippet sh should "<{description}>" do<CR><{}><CR>end
 
 "rspec
-Snippet desc describe <{class}>, "<{description}>" do<CR>before do<CR><{}><CR>end<CR>end
-Snippet descn describe <{class}> do<CR>before do<CR><{}><CR>end<CR>end
+Snippet desc describe ``ClassNameUnderTest()``, "<{description}>" do<CR>before do<CR><{}><CR>end<CR>end
+Snippet descn describe ``ClassNameUnderTest()`` do<CR>before(:each) do<CR><{}><CR>end<CR>end
 Snippet descs describe "<{description}>" do<CR>before do<CR><{}><CR>end<CR>end
 Snippet it it "should <{description}>" do<CR><{}><CR>end
 Snippet itsh it "should <{description}>" do<CR>``SpecSubject()``.should <{}><CR>end

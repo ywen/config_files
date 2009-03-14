@@ -1,0 +1,1 @@
+Snippet cla class <{%}>

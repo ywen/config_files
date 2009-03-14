@@ -1,6 +1,9 @@
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
+:au FocusLost * :wa
+" autosave buffers
+set autowriteall
 
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
@@ -14,7 +17,6 @@ set incsearch		" do incremental searching
 
 " Don't use Ex mode, use Q for formatting
 map Q gq
-
 " This is an alternative that also works in block mode, but the deleted
 " text is lost and it only works for putting the current register.
 "vnoremap p "_dp
@@ -54,20 +56,20 @@ if has("autocmd")
 
 else
 
-  set autoindent		" always set autoindenting on
+set autoindent		" always set autoindenting on
 
 endif " has("autocmd")
-
-if has("folding")
-  set foldenable
-  set foldmethod=syntax
-  set foldlevel=1
-  set foldnestmax=2
-  set foldtext=strpart(getline(v:foldstart),0,50).'\ ...\ '.substitute(getline(v:foldend),'^[\ #]*','','g').'\ '
-
+set directory=~/.vim/swp
+" if has("folding")
+"   set foldenable
+"   set foldmethod=syntax
+"   set foldlevel=1
+"   set foldnestmax=2
+"   set foldtext=strpart(getline(v:foldstart),0,50).'\ ...\ '.substitute(getline(v:foldend),'^[\ #]*','','g').'\ '
+ 
   " automatically open folds at the starting cursor position
   " autocmd BufReadPost .foldo!
-endif
+" endif
 
 " Softtabs, 2 spaces
 set tabstop=2
@@ -126,9 +128,9 @@ if executable("ack")
 endif
 
 " Color scheme
-colorscheme vividchalk
+colorscheme railscasts
 highlight NonText guibg=#060606
-highlight Folded  guibg=#0A0A0A guifg=#9090D0
+highlight Folded  guibg=#0A0A0A
 
 " Numbers
 set number
@@ -141,3 +143,43 @@ let g:snippetsEmu_key = "<S-Tab>"
 " (only complete to the longest unambiguous match, and show a menu)
 set completeopt=longest,menu
 set wildmode=list:longest,list:full
+
+" Run Rspec for the current spec file
+function! RunRspec()
+ruby << EOF
+  buffer = VIM::Buffer.current
+  spec_file = VIM::Buffer.current.name
+  print "Running Rspec for #{spec_file}. Results will be displayed in Firefox."
+  command = "ruby ~/.vim/bin/run_rspec.rb #{spec_file}"
+  system(command)
+EOF
+endfunction
+map <F7> :call RunRspec()<cr>
+map <D-r> <ESC>:w<CR><F7><CR>
+map <D-B> <ESC>:BufOnly<cr>
+function! RailsScriptSearch(args)
+  let l:savegrepprg = &grepprg  
+  let l:savegrepformat = &grepformat
+
+  try 
+    set grepprg=script/find
+    set grepformat=%f:%l:%m
+
+    execute "grep " . a:args
+  finally
+    execute "set grepformat=" . l:savegrepformat
+    execute "set grepprg=" . l:savegrepprg
+  endtry
+endfunction
+
+" search with explicitly provided arguments
+command! -n=? Rgrep :call RailsScriptSearch('<args>')
+
+" search for the word under the cursor
+map <leader>rg :silent call RailsScriptSearch(expand("'<cword>'"))<CR>:cc<CR>
+
+" search for the method definition of the word under the cursor
+map <leader>rd :silent call RailsScriptSearch(expand("'def <cword>'"))<CR>:cc<CR>
+" TextMate cmd+T mode
+command! T :FuzzyFinderTaggedFile
+

@@ -2,7 +2,7 @@
 " Use file name as class name after classify
 function! ClassName()
   let name = expand("%:t:r")
-  let new_name = substitute(name, '\(?:^\|_\)\(.\)', '\U\2', "g")
+  let new_name = substitute(name, '\(\%^\|_\)\(.\)', '\U\2', "g")
   return substitute(new_name, "\^.", '\U\0', "")
 endfunction
 

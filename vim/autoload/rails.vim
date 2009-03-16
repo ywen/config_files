@@ -523,9 +523,9 @@ function! s:app_calculate_file_type(path) dict
     let r = "spec"
   elseif f =~ '_helper\.rb$'
     let r = "helper"
-  elseif f =~ '_presenter\.rb$'
+  elseif f =~ 'presenter\.rb$'
     let r = "presenter"
-  elseif f =~ '_service\.rb$'
+  elseif f =~ 'service\.rb$'
     let r = "service"
   elseif f =~ '\<app/metal/.*\.rb$'
     let r = "metal"

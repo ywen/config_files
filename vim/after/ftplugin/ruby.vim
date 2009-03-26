@@ -33,6 +33,7 @@ function! IterVar(collection)
 endfunction
 
 Snippet cla class ``ClassName()``<CR><{}><CR>end
+Snippet mod module ``ClassName()``<CR><{}><CR>end
 " general ruby snippets
 Snippet each <{collection}>.each do |<{collection:IterVar(@z)}>|<CR><{}><CR>end
 Snippet collect <{collection}>.collect {|<{member}>| <{}> }
@@ -93,6 +94,7 @@ Snippet desc describe ``ClassNameUnderTest()``, "<{description}>" do<CR>before d
 Snippet descn describe ``ClassNameUnderTest()`` do<CR>before(:each) do<CR><{}><CR>end<CR>end
 Snippet descs describe "<{description}>" do<CR>before do<CR><{}><CR>end<CR>end
 Snippet it it "should <{description}>" do<CR><{}><CR>end
+Snippet itp it "should <{description}>"
 Snippet itsh it "should <{description}>" do<CR>``SpecSubject()``.should <{}><CR>end
 Snippet itshbe it "should <{description}>" do<CR>``SpecSubject()``.should be_<{}><CR>end
 Snippet atsh it "should <{description}>" do<CR>``SpecSubject()``.<{attr}>.should <{}><CR>end

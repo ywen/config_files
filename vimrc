@@ -5,9 +5,10 @@ set nocompatible
 " autosave buffers
 set autowriteall
 
+set ignorecase
+set smartcase
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
-
 set nobackup
 set nowritebackup
 set history=50		" keep 50 lines of command line history
@@ -149,7 +150,7 @@ function! RunRspec()
 ruby << EOF
   buffer = VIM::Buffer.current
   spec_file = VIM::Buffer.current.name
-  print "Running Rspec for #{spec_file}. Results will be displayed in Firefox."
+  VIM::message "Running Rspec for #{spec_file}. Results will be displayed in Firefox."
   command = "ruby ~/.vim/bin/run_rspec.rb #{spec_file}"
   system(command)
 EOF

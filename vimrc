@@ -15,7 +15,7 @@ set history=50		" keep 50 lines of command line history
 set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
 set incsearch		" do incremental searching
-
+set spell
 " Don't use Ex mode, use Q for formatting
 map Q gq
 " This is an alternative that also works in block mode, but the deleted
@@ -28,6 +28,7 @@ if (&t_Co > 2 || has("gui_running")) && !exists("syntax_on")
   syntax on
   set hlsearch
 endif
+let g:Tex_ViewRule_pdf = 'Skim.app'
 
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")

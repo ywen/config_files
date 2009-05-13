@@ -1,8 +1,8 @@
 " Window size
-set winwidth=76
-let g:halfsize = 150
-let g:fullsize = 150
-set lines=50
+set winwidth=50
+let g:halfsize = 120
+let g:fullsize = 120
+set lines=40
 let &columns = g:halfsize
 
 " Font
@@ -16,3 +16,6 @@ set guioptions-=T
 
 " Use console dialogs
 set guioptions+=c
+hi normal guibg=black
+set transp=4
+

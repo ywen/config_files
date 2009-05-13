@@ -1,5 +1,5 @@
-spec_dir=File.dirname(ARGV[0])
-rails_project_dir="#{spec_dir}/../.."
+spec_dir=File.expand_path File.dirname(ARGV[0])
+rails_project_dir=spec_dir.gsub(/(.+)\/spec.*/, '\1')
 
 report_file="#{rails_project_dir}/doc/rspec_report.html"
 

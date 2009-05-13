@@ -7,7 +7,7 @@ function! ToggleSymbolString()
   end
 
   VIM::command("normal diW")
-  VIM::command("normal i#{str}")
+  VIM::command("normal a#{str}")
 EOF
 endfunction
 

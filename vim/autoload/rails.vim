@@ -13,7 +13,7 @@
 if &cp || exists("g:autoloaded_rails")
   finish
 endif
-let g:autoloaded_rails = '3.3'
+let g:autoloaded_rails = '3.4'
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -523,9 +523,9 @@ function! s:app_calculate_file_type(path) dict
     let r = "spec"
   elseif f =~ '_helper\.rb$'
     let r = "helper"
-  elseif f =~ 'presenter\.rb$'
+  elseif f =~ '\<app/presenters\>'
     let r = "presenter"
-  elseif f =~ 'service\.rb$'
+  elseif f =~ '\<app/services\>'
     let r = "service"
   elseif f =~ '\<app/metal/.*\.rb$'
     let r = "metal"
@@ -849,7 +849,7 @@ function! s:app_tags_command() dict
   else
     return s:error("ctags not found")
   endif
-  exe "!".cmd." -f ".s:escarg(self.path("tmp/tags"))." --exclude=facebox.js --exclude=\"*.*.js\" --langmap=\"ruby:+.rake.builder.rjs\" -R ".s:escarg(self.path())
+  exe '!'.cmd.' -f '.s:escarg(self.path("tmp/tags")).' -R --langmap="ruby:+.rake.builder.rjs" '.g:rails_ctags_arguments.' '.s:escarg(self.path())
 endfunction
 
 call s:add_methods('app',['tags_command'])
@@ -1536,6 +1536,10 @@ function! s:djump(def)
   let def = s:sub(a:def,'^[#:]','')
   if def =~ '^\d\+$'
     exe def
+  elseif def =~ '^!'
+    if expand('%') !~ '://' && !isdirectory(expand('%:p:h'))
+      call mkdir(expand('%:p:h'),'p')
+    endif
   elseif def != ''
     let ext = matchstr(def,'\.\zs.*')
     let def = matchstr(def,'[^.]*')
@@ -1566,9 +1570,9 @@ function! s:Find(bang,count,arg,...)
       let i += 1
     endwhile
     let file = a:{i}
-    let tail = matchstr(file,'#.*$\|:\d*\%(:in\>.*\)\=$')
+    let tail = matchstr(file,'[#!].*$\|:\d*\%(:in\>.*\)\=$')
     if tail != ""
-      let file = s:sub(file,'#.*$|:\d*%(:in>.*)=$','')
+      let file = s:sub(file,'[#!].*$|:\d*%(:in>.*)=$','')
     endif
     if file != ""
       let file = s:RailsIncludefind(file)
@@ -1724,7 +1728,8 @@ function! s:RailsFind()
   if res != ""|return res."\n".s:findview(res)|endif
   let res = s:findamethod('render\s*:\%(template\|action\)\s\+=>\s*','\1.'.format.'\n\1')
   if res != ""|return res|endif
-  let res = s:sub(s:sub(s:findfromview('render','\1'),'^/',''),'\k+$','_&')
+  let res = s:sub(s:findamethod('render','\1'),'^/','')
+  if RailsFileType() =~ '^view\>' | let res = s:sub(res,'[^/]+$','_&') | endif
   if res != ""|return res."\n".s:findview(res)|endif
   let res = s:findamethod('redirect_to\s*(\=\s*:action\s\+=>\s*','\1')
   if res != ""|return res|endif
@@ -2200,8 +2205,11 @@ function! s:EditSimpleRb(bang,cmd,name,target,prefix,suffix,...)
     return s:error("E471: Argument required")
   endif
   let f = a:0 ? a:target : rails#underscore(a:target)
-  let jump = matchstr(f,'#.*\|:\d*\%(:in\)\=$')
-  let f = s:sub(f,'#.*|:\d*%(:in)=$','')
+  let jump = matchstr(f,'[#!].*\|:\d*\%(:in\)\=$')
+  let f = s:sub(f,'[#!].*|:\d*%(:in)=$','')
+  if jump =~ '^!'
+    let cmd = s:editcmdfor(cmd)
+  endif
   if f == '.'
     let f = s:sub(f,'\.$','')
   else
@@ -2273,7 +2281,11 @@ function! s:fixturesEdit(bang,cmd,...)
 endfunction
 
 function! s:metalEdit(bang,cmd,...)
-  call s:EditSimpleRb(a:bang,a:cmd,"metal",a:0? a:1 : '../../config/boot',"app/metal/",".rb")
+  if a:0
+    call s:EditSimpleRb(a:bang,a:cmd,"metal",a:1,"app/metal/",".rb")
+  else
+    call s:EditSimpleRb(a:bang,a:cmd,"metal",'config/boot',"",".rb")
+  endif
 endfunction
 
 function! s:modelEdit(bang,cmd,...)
@@ -2285,8 +2297,8 @@ function! s:observerEdit(bang,cmd,...)
 endfunction
 
 function! s:viewEdit(bang,cmd,...)
-  if a:0
-    let view = a:1
+  if a:0 && a:1 =~ '^[^!#:]'
+    let view = matchstr(a:1,'[^!#:]*')
   elseif RailsFileType() == 'controller'
     let view = s:lastmethod()
   else
@@ -2305,9 +2317,15 @@ function! s:viewEdit(bang,cmd,...)
   let file = "app/views/".view
   let found = s:findview(view)
   if found != ''
+    let dir = fnamemodify(rails#app().path(found),':h')
+    if !isdirectory(dir)
+      if a:0 && a:1 =~ '!'
+        call mkdir(dir)
+      else
+        return s:error('No such directory')
+      endif
+    endif
     call s:edit(a:cmd.(a:bang?'!':''),found)
-  elseif file =~ '\.\w\+\.\w\+$' || file =~ '\.'.s:viewspattern().'$'
-    call s:edit(a:cmd.(a:bang?'!':''),file)
   elseif file =~ '\.\w\+$'
     call s:findedit(a:cmd.(a:bang?'!':''),file)
   else
@@ -2364,14 +2382,9 @@ endfunction
 
 function! s:layoutEdit(bang,cmd,...)
   if a:0
-    let c = rails#underscore(a:1)
-  else
-    let c = s:controller(1)
+    return s:viewEdit(a:bang,a:cmd,"layouts/".a:1)
   endif
-  if c == ""
-    let c = "application"
-  endif
-  let file = s:findlayout(c)
+  let file = s:findlayout(s:controller(1))
   if file == ""
     let file = s:findlayout("application")
   endif
@@ -2414,8 +2427,13 @@ function! s:javascriptEdit(bang,cmd,...)
 endfunction
 
 function! s:unittestEdit(bang,cmd,...)
-  let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
-  let f = rails#underscore(a:0 ? a:1 : s:model(1))
+  let f = rails#underscore(a:0 ? matchstr(a:1,'[^!#:]*') : s:model(1))
+  let jump = a:0 ? matchstr(a:1,'[!#:].*') : ''
+  if jump =~ '!'
+    let cmd = s:editcmdfor(a:cmd.(a:bang?'!':''))
+  else
+    let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
+  endif
   let mapping = {'test': ['test/unit/','_test.rb'], 'spec': ['spec/models/','_spec.rb']}
   let tests = map(filter(rails#app().test_suites(),'has_key(mapping,v:val)'),'get(mapping,v:val)')
   if empty(tests)
@@ -2424,21 +2442,26 @@ function! s:unittestEdit(bang,cmd,...)
   for [prefix, suffix] in tests
     if !a:0 && RailsFileType() =~# '^model-aro\>' && f != '' && f !~# '_observer$'
       if rails#app().has_file(prefix.f.'_observer'.suffix)
-        return s:findedit(cmd,prefix.f.'_observer'.suffix)
+        return s:findedit(cmd,prefix.f.'_observer'.suffix.jump)
       endif
     endif
   endfor
   for [prefix, suffix] in tests
     if rails#app().has_file(prefix.f.suffix)
-      return s:findedit(cmd,prefix.f.suffix)
+      return s:findedit(cmd,prefix.f.suffix.jump)
     endif
   endfor
-  return s:findedit(cmd,tests[0][0].f.tests[0][1])
+  return s:EditSimpleRb(a:bang,a:cmd,"unittest",f.jump,tests[0][0],tests[0][1],1)
 endfunction
 
 function! s:functionaltestEdit(bang,cmd,...)
-  let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
-  let f = rails#underscore(a:0 ? a:1 : s:controller(1))
+  let f = rails#underscore(a:0 ? matchstr(a:1,'[^!#:]*') : s:controller(1))
+  let jump = a:0 ? matchstr(a:1,'[!#:].*') : ''
+  if jump =~ '!'
+    let cmd = s:editcmdfor(a:cmd.(a:bang?'!':''))
+  else
+    let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
+  endif
   let mapping = {'test': ['test/functional/','_test.rb'], 'spec': ['spec/controllers/','_spec.rb']}
   let tests = map(filter(rails#app().test_suites(),'has_key(mapping,v:val)'),'get(mapping,v:val)')
   if empty(tests)
@@ -2446,38 +2469,44 @@ function! s:functionaltestEdit(bang,cmd,...)
   endif
   for [prefix, suffix] in tests
     if rails#app().has_file(prefix.f.suffix)
-      return s:findedit(cmd,prefix.f.suffix)
+      return s:findedit(cmd,prefix.f.suffix.jump)
     elseif rails#app().has_file(prefix.f.'_controller'.suffix)
-      return s:findedit(cmd,prefix.f.'_controller'.suffix)
+      return s:findedit(cmd,prefix.f.'_controller'.suffix.jump)
     elseif rails#app().has_file(prefix.f.'_api'.suffix)
-      return s:findedit(cmd,prefix.f.'_api'.suffix)
+      return s:findedit(cmd,prefix.f.'_api'.suffix.jump)
     endif
   endfor
-  return s:findedit(cmd,tests[0][0].f.tests[0][1])
+  return s:EditSimpleRb(a:bang,a:cmd,"functionaltest",f.jump,tests[0][0],tests[0][1],1)
 endfunction
 
 function! s:integrationtestEdit(bang,cmd,...)
   if !a:0
-    if rails#app().test_suites('features')
+    if rails#app().has('cucumber')
       return s:EditSimpleRb(a:bang,a:cmd,"integrationtest","support/env","features/",".rb")
     else
       return s:EditSimpleRb(a:bang,a:cmd,"integrationtest","test_helper","test/",".rb")
     endif
   endif
-  let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
-  let mapping = {'test': ['test/integration/','_test.rb'], 'features': ['features/','.feature']}
+  let f = rails#underscore(matchstr(a:1,'[^!#:]*'))
+  let jump = matchstr(a:1,'[!#:].*')
+  if jump =~ '!'
+    let cmd = s:editcmdfor(a:cmd.(a:bang?'!':''))
+  else
+    let cmd = s:findcmdfor(a:cmd.(a:bang?'!':''))
+  endif
+  let mapping = {'test': ['test/integration/','_test.rb'], 'cucumber': ['features/','.feature']}
   let tests = map(filter(rails#app().test_suites(),'has_key(mapping,v:val)'),'get(mapping,v:val)')
   if empty(tests)
     let tests = [mapping['test']]
   endif
   for [prefix, suffix] in tests
-    if rails#app().has_file(prefix.a:1.suffix)
-      return s:findedit(cmd,prefix.a:1.suffix)
-    elseif rails#app().has_file(prefix.rails#underscore(a:1).suffix)
-      return s:findedit(cmd,prefix.rails#underscore(a:1).suffix)
+    if rails#app().has_file(prefix.f.suffix)
+      return s:findedit(cmd,prefix.f.suffix.jump)
+    elseif rails#app().has_file(prefix.rails#underscore(f).suffix)
+      return s:findedit(cmd,prefix.rails#underscore(f).suffix.jump)
     endif
   endfor
-  return s:findedit(cmd,tests[0][0].a:1.tests[0][1])
+  return s:EditSimpleRb(a:bang,a:cmd,"integrationtest",f.jump,tests[0][0],tests[0][1],1)  
 endfunction
 
 function! s:specEdit(bang,cmd,...)
@@ -2607,9 +2636,9 @@ function! s:findedit(cmd,files,...) abort
   else
     let file = get(filter(copy(files),'rails#app().has_file(s:sub(v:val,"#.*|:\\d*$",""))'),0,get(files,0,''))
   endif
-  if file =~ '#\|:\d*\%(:in\)\=$'
-    let djump = matchstr(file,'#\zs.*\|:\zs\d*\ze\%(:in\)\=$')
-    let file = s:sub(file,'#.*|:\d*%(:in)=$','')
+  if file =~ '[#!]\|:\d*\%(:in\)\=$'
+    let djump = matchstr(file,'!.*\|#\zs.*\|:\zs\d*\ze\%(:in\)\=$')
+    let file = s:sub(file,'[#!].*|:\d*%(:in)=$','')
   else
     let djump = ''
   endif
@@ -3119,12 +3148,9 @@ function! s:Invert(bang)
   if beg + 1 < end
     exe (beg+1).",".(end-1)."delete _"
   endif
-  if str != ""
-    let reg_keep = @"
-    let @" = str
-    exe beg."put"
+  if str != ''
+    exe beg.'put =str'
     exe 1+beg
-    let @" = reg_keep
   endif
 endfunction
 
@@ -3189,9 +3215,10 @@ function! s:helpermethods()
         \."atom_feed auto_discovery_link_tag auto_link "
         \."benchmark button_to button_to_function button_to_remote "
         \."cache capture cdata_section check_box check_box_tag collection_select concat content_for content_tag content_tag_for current_cycle cycle "
-        \."date_select datetime_select debug define_javascript_functions distance_of_time_in_words distance_of_time_in_words_to_now div_for dom_class dom_id draggable_element draggable_element_js drop_receiving_element drop_receiving_element_js "
+        \."date_select datetime_select debug distance_of_time_in_words distance_of_time_in_words_to_now div_for dom_class dom_id draggable_element draggable_element_js drop_receiving_element drop_receiving_element_js "
         \."error_message_on error_messages_for escape_javascript escape_once evaluate_remote_response excerpt "
         \."field_set_tag fields_for file_field file_field_tag form form_for form_remote_for form_remote_tag form_tag "
+        \."grouped_options_for_select "
         \."hidden_field hidden_field_tag highlight "
         \."image_path image_submit_tag image_tag input "
         \."javascript_cdata_section javascript_include_tag javascript_path javascript_tag "
@@ -3258,7 +3285,7 @@ function! s:BufSyntax()
       endif
       if t =~ '^model$' || t =~ '^model-arb\>'
         syn keyword rubyRailsARMethod default_scope named_scope serialize
-        syn keyword rubyRailsARAssociationMethod belongs_to has_one has_many has_and_belongs_to_many composed_of
+        syn keyword rubyRailsARAssociationMethod belongs_to has_one has_many has_and_belongs_to_many composed_of accepts_nested_attributes_for
         syn keyword rubyRailsARCallbackMethod before_create before_destroy before_save before_update before_validation before_validation_on_create before_validation_on_update
         syn keyword rubyRailsARCallbackMethod after_create after_destroy after_save after_update after_validation after_validation_on_create after_validation_on_update
         syn keyword rubyRailsARClassMethod attr_accessible attr_protected establish_connection set_inheritance_column set_locking_column set_primary_key set_sequence_name set_table_name
@@ -4353,7 +4380,7 @@ function! s:SetBasePath()
   endif
   let path += ['app/*', 'vendor', 'vendor/plugins/*/lib', 'vendor/plugins/*/test', 'vendor/rails/*/lib', 'vendor/rails/*/test']
   call map(path,'rails#app().path(v:val)')
-  let &l:path = s:pathjoin('.',rails#app().path(),path,old_path)
+  let &l:path = s:pathjoin('.',[rails#app().path()],path,old_path)
 endfunction
 
 function! s:BufSettings()

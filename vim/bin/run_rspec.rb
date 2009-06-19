@@ -30,6 +30,7 @@ if File.exists? report_file
 end
 
 argv = [ARGV[0]]
+argv << "--drb"
 argv << "--c"
 argv << "--format"
 argv << "html:#{report_file}"

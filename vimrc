@@ -30,6 +30,7 @@ if (&t_Co > 2 || has("gui_running")) && !exists("syntax_on")
 endif
 let g:Tex_ViewRule_pdf = 'Skim.app'
 
+au BufRead,BufNewFile *.js set ft=javascript.jquery
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 

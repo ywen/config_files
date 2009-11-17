@@ -20,6 +20,9 @@ syn include @hamlRubyTop syntax/ruby.vim
 
 syn case match
 
+syn region  rubyCurlyBlock   start="{" end="}" contains=@hamlRubyTop contained containedin=rubyInterpolation
+syn cluster hamlRubyTop add=rubyCurlyBlock
+
 syn cluster hamlComponent    contains=hamlAttributes,hamlAttributesHash,hamlClassChar,hamlIdChar,hamlObject,hamlDespacer,hamlSelfCloser,hamlRuby,hamlPlainChar,hamlInterpolatable
 syn cluster hamlEmbeddedRuby contains=hamlAttributesHash,hamlObject,hamlRuby,hamlRubyFilter
 syn cluster hamlTop          contains=hamlBegin,hamlPlainFilter,hamlRubyFilter,hamlSassFilter,hamlComment,hamlHtmlComment
@@ -33,7 +36,7 @@ syn region  hamlObject         matchgroup=hamlObjectDelimiter     start="\[" end
 syn match   hamlDespacer "[<>]" contained nextgroup=hamlDespacer,hamlSelfCloser,hamlRuby,hamlPlainChar,hamlInterpolatable
 syn match   hamlSelfCloser "/" contained
 syn match   hamlClassChar "\." contained nextgroup=hamlClass
-syn match   hamlIdChar    "#"  contained nextgroup=hamlId
+syn match   hamlIdChar "#{\@!" contained nextgroup=hamlId
 syn match   hamlClass "\%(\w\|-\)\+" contained nextgroup=@hamlComponent
 syn match   hamlId    "\%(\w\|-\)\+" contained nextgroup=@hamlComponent
 syn region  hamlDocType start="^\s*!!!" end="$"

@@ -1,7 +1,9 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =5
+let g:netrw_dirhist_cnt =7
 let g:netrw_dirhist_1='/Users/ywen/projects/next_gen/wos_app/app/views/admin/member_visits'
 let g:netrw_dirhist_2='/Users/ywen/projects/next_gen/wos_app/app/forms/bill_search'
 let g:netrw_dirhist_3='/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_ports_lang_gcc42/work/gcc-4.2.4/config'
 let g:netrw_dirhist_4='/Users/ywen/projects/next_gen/pm_service/app/controllers/services'
 let g:netrw_dirhist_5='/Users/ywen/projects/next_gen/wos_app/app/views/admin/member_lab_tests'
+let g:netrw_dirhist_6='/Users/ywen/projects/next_gen/pm_service/app/controllers/services'
+let g:netrw_dirhist_7='/Users/ywen/projects/next_gen/wos_app/config/shows/admin_member_lab_test_results'

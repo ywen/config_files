@@ -2,13 +2,14 @@
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 :au FocusLost * :wa
+set t_Co=256
 " autosave buffers
 set autowriteall
-
 set ignorecase
 set smartcase
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
+set shell=/bin/bash
 set nobackup
 set nowritebackup
 set history=50		" keep 50 lines of command line history
@@ -46,6 +47,7 @@ if has("autocmd")
 
   " For all text files set 'textwidth' to 78 characters.
   autocmd FileType text setlocal textwidth=78
+  autocmd BufNewFile,BufRead *.ctl setf ruby
 
   " When editing a file, always jump to the last known cursor position.
   " Don't do it when the position is invalid or when inside an event handler
@@ -69,6 +71,8 @@ if has("folding")
   set foldlevel=1
   set foldnestmax=2
   set foldtext=strpart(getline(v:foldstart),0,50).'\ ...\ '.substitute(getline(v:foldend),'^[\ #]*','','g').'\ '
+  highlight Folded guibg=grey guifg=blue
+  highlight FoldColumn guibg=darkgrey guifg=white
   " automatically open folds at the starting cursor position
   " autocmd BufReadPost .foldo!
 endif
@@ -97,7 +101,7 @@ map ,t :tabe <C-R>=expand("%:p:h") . "/" <CR>
 cmap <C-P> <C-R>=expand("%:p:h") . "/" <CR>
 
 " Maps autocomplete to tab
-imap <Tab> <C-N>
+" imap <Tab> <C-N>
 
 " Duplicate a selection
 " Visual mode: D
@@ -113,7 +117,8 @@ nmap <F1> <Esc>
 imap <C-F> <C-R>=expand("%")<CR>
 
 " Display extra whitespace
-set list listchars=tab:»·,trail:·
+" set list listchars=tab:»·,trail:·
+let g:Conque_TERM = "xterm"
 
 " Edit routes
 command! Rroutes :e config/routes.rb
@@ -143,6 +148,7 @@ let g:snippetsEmu_key = "<S-Tab>"
 
 " Tab completion options
 " (only complete to the longest unambiguous match, and show a menu)
+set complete=.,w,b,u,t
 set completeopt=longest,menu
 set wildmode=list:longest,list:full
 
@@ -183,5 +189,17 @@ map <leader>rg :silent call RailsScriptSearch(expand("'<cword>'"))<CR>:cc<CR>
 " search for the method definition of the word under the cursor
 map <leader>rd :silent call RailsScriptSearch(expand("'def <cword>'"))<CR>:cc<CR>
 " TextMate cmd+T mode
-command! T :FuzzyFinderTaggedFile
+
+"ruby
+" autocmd FileType ruby,eruby set omnifunc=rubycomplete#Complete
+" autocmd FileType ruby,eruby let g:rubycomplete_buffer_loading = 1
+" autocmd FileType ruby,eruby let g:rubycomplete_rails = 1
+" autocmd FileType ruby,eruby let g:rubycomplete_classes_in_global = 1
+"improve autocomplete menu color
+highlight Pmenu ctermbg=238 gui=bold guibg=#9aadd5 guifg=black
+ augroup mkd
+
+  autocmd BufRead *.mkd  set ai formatoptions=tcroqn2 comments=n:&gt;
+
+ augroup END
 

@@ -8,6 +8,8 @@ let &columns = g:halfsize
 " Font
 set guifont=Monaco:h16.00
 
+set fuoptions=maxhorz,maxvert,background:Normal
+
 " No audible bell
 set vb
 
@@ -17,5 +19,4 @@ set guioptions-=T
 " Use console dialogs
 set guioptions+=c
 hi normal guibg=black
-set transp=4
-
+set transp=8

@@ -1,1 +1,0 @@
-/Users/ywen/github_projs/vim-pastie/plugin/pastie.vim

@@ -1,5 +1,7 @@
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
+call pathogen#helptags()
+call pathogen#runtime_append_all_bundles() 
 set nocompatible
 :au FocusLost * :wa
 set t_Co=256
@@ -203,3 +205,6 @@ highlight Pmenu ctermbg=238 gui=bold guibg=#9aadd5 guifg=black
 
  augroup END
 
+"Rails
+autocmd User Rails		Rnavcommand form app/forms -glob=**/*
+autocmd User Rails		Rnavcommand presenter app/presenter -glob=**/*

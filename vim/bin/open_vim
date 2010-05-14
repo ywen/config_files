@@ -1,4 +1,0 @@
-#!/usr/local/bin/ruby
-regex = /vim:\/\/(.+)\?(\d+)/
-ARGV[0] =~ regex
-system("/usr/local/bin/mvim --remote +#{$2} file://#{$1}")

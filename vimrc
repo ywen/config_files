@@ -137,7 +137,7 @@ if executable("ack")
 endif
 
 " Color scheme
-colorscheme railscasts
+colorscheme vividchalk
 highlight NonText guibg=#060606
 highlight Folded  guibg=#0A0A0A
 
@@ -208,3 +208,4 @@ highlight Pmenu ctermbg=238 gui=bold guibg=#9aadd5 guifg=black
 "Rails
 autocmd User Rails		Rnavcommand form app/forms -glob=**/*
 autocmd User Rails		Rnavcommand presenter app/presenter -glob=**/*
+autocmd User Rails		Rnavcommand plugin vendor/plugins -glob=**/*
